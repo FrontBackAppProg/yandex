@@ -1,42 +1,25 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+// Загрузка переменных окружения из .env
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
+
+app.use(cors());
 
 const YMAPS_API_KEY = process.env.YMAPS_API_KEY;
+
 if (!YMAPS_API_KEY) {
   console.error('❌ YMAPS_API_KEY не найден в .env!');
   process.exit(1);
 }
 
-// ✅ Загрузка и парсинг ALLOWED_REFERERS из .env
-const ALLOWED_REFERERS = process.env.ALLOWED_REFERERS
-  ? process.env.ALLOWED_REFERERS.split(',').map(s => s.trim())
-  : [];
-
-app.use(cors());
 app.use(express.static('public'));
 
-// 🔐 Прокси-загрузчик Yandex Maps
+// Возвращаем JS-файл, который подключает Яндекс.Карты с ключом
 app.get('/ymaps-loader.js', (req, res) => {
-  const referer = req.headers.referer;
-
-  if (!referer) {
-    return res.status(403).send('// Access denied: No Referer');
-  }
-
-  try {
-    const domain = new URL(referer).hostname.replace(/^www\./, '');
-    if (!ALLOWED_REFERERS.includes(domain)) {
-      return res.status(403).send('// Access denied: Invalid Referer');
-    }
-  } catch {
-    return res.status(403).send('// Access denied: Malformed Referer');
-  }
-
   res.set('Content-Type', 'application/javascript');
   res.send(`
     const script = document.createElement('script');
